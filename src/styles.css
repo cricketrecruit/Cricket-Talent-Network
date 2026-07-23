@@ -1,0 +1,260 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand tokens */
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-cricket-red: var(--cricket-red);
+  --color-cricket-red-deep: var(--cricket-red-deep);
+  --color-field-green: var(--field-green);
+  --color-metric: var(--metric);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-black: var(--ink-black);
+  --color-rule-red: var(--rule-red);
+
+  --font-display: "Bebas Neue", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+:root {
+  --radius: 0.5rem;
+
+  --navy: oklch(0.21 0.05 260);
+  --navy-soft: oklch(0.27 0.05 260);
+  --cricket-red: oklch(0.58 0.22 25);
+  --cricket-red-deep: oklch(0.5 0.22 25);
+  --field-green: oklch(0.55 0.15 145);
+  --metric: oklch(0.96 0.01 250);
+  --ink: oklch(0.21 0.05 260);
+  --ink-soft: oklch(0.45 0.03 260);
+  --ink-black: oklch(0.12 0.01 260);
+  --rule-red: oklch(0.58 0.22 25);
+
+  --background: oklch(1 0 0);
+  --foreground: var(--ink);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--ink);
+  --primary: var(--cricket-red);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--metric);
+  --secondary-foreground: var(--ink);
+  --muted: var(--metric);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--navy);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.92 0.01 260);
+  --input: oklch(0.92 0.01 260);
+  --ring: var(--cricket-red);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Pointer cursor on every clickable element */
+  a,
+  button,
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="switch"],
+  [role="radio"],
+  [role="checkbox"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"],
+  input[type="file"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  textarea,
+  label,
+  summary,
+  details[open] summary,
+  [onclick] {
+    cursor: pointer;
+  }
+
+  /* Keep default cursor on disabled controls */
+  button:disabled,
+  [role="button"]:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  a[aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+/* Animations */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slow-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee-fast {
+  animation: marquee 22s linear infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 18s ease-in-out infinite alternate;
+}
+
+.skew-tag {
+  transform: skewX(-12deg);
+}
+.skew-tag > * {
+  transform: skewX(12deg);
+  display: inline-block;
+}
+
+/* Microinteractions */
+@keyframes ball-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--cricket-red) 60%, transparent); }
+  50% { box-shadow: 0 0 0 12px color-mix(in oklch, var(--cricket-red) 0%, transparent); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.animate-ball-spin { animation: ball-spin 12s linear infinite; }
+.animate-pulse-red { animation: pulse-red 2.4s ease-out infinite; }
+
+.lift {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s;
+}
+.lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px -24px color-mix(in oklch, var(--ink-black) 35%, transparent);
+}
+
+.zoom-frame {
+  overflow: hidden;
+}
+.zoom-frame img {
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.zoom-frame:hover img {
+  transform: scale(1.08);
+}
+
+.cta-press {
+  transition: transform 0.15s ease, background-color 0.25s ease, color 0.25s ease;
+}
+.cta-press:hover { transform: translateY(-2px); }
+.cta-press:active { transform: translateY(0) scale(0.98); }
+
+.story-link {
+  position: relative;
+  display: inline-block;
+}
+.story-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: var(--cricket-red);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.story-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee, .animate-marquee-fast, .animate-slow-zoom, .animate-ball-spin, .animate-pulse-red { animation: none; }
+  .reveal { opacity: 1; transform: none; }
+}

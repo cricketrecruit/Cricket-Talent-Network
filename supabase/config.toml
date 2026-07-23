@@ -1,0 +1,23 @@
+# Supabase local + linked project config. Set project_id to your own project
+# ref (Supabase Dashboard > Project Settings > General > Reference ID) before
+# running `supabase link` / `supabase db push`.
+project_id = "xxjaxnwfawhfkfjkezgf"
+
+[auth]
+enable_signup = true
+
+[auth.email]
+# Set to true if you require email confirmation before sign-in.
+enable_confirmations = false
+
+[auth.email.template.recovery]
+subject = "Reset your Cricket Recruit password"
+content_path = "./supabase/templates/recovery.html"
+
+# Private bucket for player uploads. Storage RLS policies for this bucket are
+# defined in supabase/migrations/. `supabase db push` creates it on the linked
+# project.
+[storage.buckets.player-media]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["image/*", "video/*", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]

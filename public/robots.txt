@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /auth
+Disallow: /admin
+Disallow: /player
+Disallow: /recruiter
+Disallow: /reset-password
+
+# TODO: add "Sitemap: https://<production-domain>/sitemap.xml" once the domain is set.
