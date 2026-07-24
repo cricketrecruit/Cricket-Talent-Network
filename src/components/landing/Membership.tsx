@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import stadiumImg from "@/assets/action-stadium-crowd.jpg";
 import { useReveal } from "@/hooks/use-reveal";
 import { ContactModal } from "./ContactModal";
@@ -25,7 +26,6 @@ export function Membership() {
   const headRef = useReveal<HTMLDivElement>();
   const cardsRef = useReveal<HTMLDivElement>(0.1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalIntent, setModalIntent] = useState<"player" | "scout">("scout");
 
   return (
 
@@ -71,13 +71,13 @@ export function Membership() {
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
-              onClick={() => { setModalIntent("player"); setModalOpen(true); }}
-              className="cta-press skew-tag w-full py-3 border-2 border-ink-black text-ink-black font-display uppercase italic text-base tracking-widest hover:bg-ink-black hover:text-white"
+            <Link
+              to="/auth"
+              search={{ tab: "player" }}
+              className="cta-press skew-tag w-full py-3 border-2 border-ink-black text-ink-black font-display uppercase italic text-base tracking-widest hover:bg-ink-black hover:text-white flex items-center justify-center"
             >
               <span>Get Started Free</span>
-            </button>
+            </Link>
 
           </article>
 
@@ -104,7 +104,7 @@ export function Membership() {
             </ul>
             <button
               type="button"
-              onClick={() => { setModalIntent("scout"); setModalOpen(true); }}
+              onClick={() => setModalOpen(true)}
               className="cta-press skew-tag w-full py-3 bg-cricket-red text-white font-display uppercase italic text-base tracking-widest hover:bg-white hover:text-ink-black animate-pulse-red"
             >
               <span>Apply for Access</span>
@@ -113,13 +113,7 @@ export function Membership() {
 
         </div>
       </div>
-      <ContactModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={modalIntent === "player" ? "Create Your Free Player Profile" : "Apply for Franchise Scout Access"}
-        eyebrow={modalIntent === "player" ? "Player Sign-Up" : "Membership Application"}
-        intent={modalIntent === "player" ? "Ever Free Player" : "Franchise Scout"}
-      />
+      <ContactModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </section>
 
   );

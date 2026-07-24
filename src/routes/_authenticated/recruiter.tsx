@@ -2,6 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  getPlayerProfileRows,
+  PLAYER_LABELS,
+  type PlayerProfileAudience,
+} from "@/lib/player-profile-fields";
 
 export const Route = createFileRoute("/_authenticated/recruiter")({
   head: () => ({ meta: [{ title: "Recruiter · Cricket Recruit" }, { name: "robots", content: "noindex" }] }),
@@ -183,10 +188,25 @@ function TopBar({ onSignOut, dark = false }: { onSignOut: () => void; dark?: boo
   );
 }
 
-export function PlayerDetail({ id, onBack }: { id: string; onBack: () => void }) {
+export function PlayerDetail({
+  id,
+  onBack,
+  audience = "recruiter",
+  accountEmail,
+}: {
+  id: string;
+  onBack: () => void;
+  audience?: PlayerProfileAudience;
+  accountEmail?: string | null;
+}) {
   const { data: p } = useQuery({
     queryKey: ["player", id],
     queryFn: async () => (await supabase.from("player_profiles").select("*").eq("user_id", id).maybeSingle()).data,
+  });
+  const { data: profileEmail } = useQuery({
+    queryKey: ["player-account-email", id],
+    enabled: audience === "admin" && accountEmail === undefined,
+    queryFn: async () => (await supabase.from("profiles").select("email").eq("id", id).maybeSingle()).data?.email ?? null,
   });
   const { data: media } = useQuery({
     queryKey: ["player-media", id],
@@ -204,7 +224,12 @@ export function PlayerDetail({ id, onBack }: { id: string; onBack: () => void })
       (await supabase.storage.from("player-media").createSignedUrl(p!.cv_storage_path!, 3600, { download: p!.cv_storage_path!.split("/").pop() })).data
         ?.signedUrl,
   });
+
   if (!p) return <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-ink-soft animate-pulse">Loading</p>;
+
+  const resolvedAccountEmail = accountEmail ?? profileEmail ?? null;
+  const rows = getPlayerProfileRows(p, audience === "admin" ? "admin" : "recruiter", resolvedAccountEmail);
+
   return (
     <div>
       <button onClick={onBack} className="text-[10px] font-mono uppercase tracking-[0.3em] text-cricket-red hover:tracking-[0.4em] transition-all mb-8">
@@ -216,37 +241,36 @@ export function PlayerDetail({ id, onBack }: { id: string; onBack: () => void })
           {photoUrl && (
             <img src={photoUrl} alt="" className="size-20 rounded-full object-cover border border-ink-black/10 shrink-0" />
           )}
-          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft">
-            {p.primary_skill.replace(/_/g, " ")} · {p.age_group.replace(/_/g, " ")}
-            {p.gender && <> · {p.gender}</>}
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1">Player Profile</div>
+            <h2 className="font-display italic text-5xl md:text-6xl uppercase leading-[0.9] text-ink-black">
+              {p.first_name}<br /><span className="text-ink-black/30">{p.last_name}</span>
+            </h2>
+            {p.headline && <p className="text-ink-soft text-sm mt-2">{p.headline}</p>}
           </div>
         </div>
-        <h2 className="font-display italic text-5xl md:text-6xl uppercase leading-[0.9] mb-2">
-          {p.first_name}<br /><span className="text-ink-black/30">{p.last_name}</span>
-        </h2>
-        <p className="text-ink-soft text-sm mb-10 min-h-[1.25rem]">{p.headline}</p>
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6 pt-8 border-t border-ink-black/10">
-          <Row k="DOB" v={p.dob} />
-          <Row k="Contact" v={`${p.contact_email} · ${p.phone_country_code} ${p.phone_number}`} />
-          <Row k="Location" v={`${p.city}, ${p.state}, ${p.country}`} />
-          <Row k="Academy" v={p.academy} />
-          <Row k="Batting" v={p.batting_style.replace(/_/g, " ")} />
-          <Row k="Bowling" v={p.bowling_style.replace(/_/g, " ")} />
-          {p.bio && <div className="sm:col-span-2"><Row k="Bio" v={p.bio} /></div>}
-          <div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1.5">CV / Resume</div>
-            {cvUrl ? (
-              <a href={cvUrl} download className="text-sm text-cricket-red hover:underline">↓ Download</a>
-            ) : (
-              <div className="text-sm text-ink-black">—</div>
-            )}
-          </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 pt-8 border-t border-ink-black/10">
+          {rows.map((row) => (
+            <div key={row.key} className={row.fullWidth ? "sm:col-span-2 lg:col-span-3" : ""}>
+              <Row k={row.label} v={row.value} />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-ink-black/10">
+          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1.5">{PLAYER_LABELS.cv}</div>
+          {cvUrl ? (
+            <a href={cvUrl} download className="text-sm text-cricket-red hover:underline">↓ Download CV / Resume</a>
+          ) : (
+            <div className="text-sm text-ink-black">—</div>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-3 mb-6">
         <div className="h-px w-10 bg-cricket-red" />
-        <h3 className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-black">Media Library</h3>
+        <h3 className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft">Media Library</h3>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-ink-black/10">
         {(media ?? []).map((m) => <ViewMedia key={m.id} media={m} />)}
@@ -261,6 +285,13 @@ export function PlayerDetail({ id, onBack }: { id: string; onBack: () => void })
 }
 
 function Row({ k, v }: { k: string; v: string }) {
+  if (!v && k) {
+    return (
+      <div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1.5">{k}</div>
+      </div>
+    );
+  }
   return (
     <div>
       <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1.5">{k}</div>

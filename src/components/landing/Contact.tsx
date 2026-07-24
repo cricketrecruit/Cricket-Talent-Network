@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-
 import stadiumImg from "@/assets/action-stadium-crowd.jpg";
 import joinNetworkVideo from "@/assets/join-network-bg.mp4";
 import { useReveal } from "@/hooks/use-reveal";
@@ -38,13 +36,13 @@ export function Contact() {
             </h2>
           </div>
           <div className="lg:col-span-4 lg:text-right">
-            <Link
-              to="/membership"
+            <a
+              href="/#membership"
               className="cta-press skew-tag inline-block bg-cricket-red text-white px-7 py-4 font-display text-lg uppercase italic tracking-wider hover:bg-white hover:text-ink-black"
             >
               <span>Join the Network</span>
 
-            </Link>
+            </a>
           </div>
         </div>
 

@@ -9,7 +9,7 @@ import { resolveRolePathForUser, type RoleDest } from "@/lib/role-redirect";
 const NAV = [
   { href: "/#about", label: "About" },
   { href: "/#services", label: "Services" },
-  { to: "/membership", label: "Membership" },
+  { href: "/#membership", label: "Membership" },
   { href: "/#contact", label: "Contact" },
 ];
 
@@ -49,25 +49,15 @@ export function Header() {
           aria-label="Primary"
           className="pointer-events-none absolute inset-x-0 top-0 h-20 hidden lg:flex items-center justify-center gap-8 font-display uppercase tracking-[0.2em] z-20"
         >
-          {NAV.map((item) =>
-            "to" in item ? (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="pointer-events-auto story-link text-white hover:text-cricket-red transition-colors text-base"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <a
-                key={item.label}
-                href={item.href}
-                className="pointer-events-auto story-link text-white hover:text-cricket-red transition-colors text-base"
-              >
-                {item.label}
-              </a>
-            ),
-          )}
+          {NAV.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className="pointer-events-auto story-link text-white hover:text-cricket-red transition-colors text-base"
+            >
+              {item.label}
+            </a>
+          ))}
         </nav>
 
         <div className="pointer-events-none relative max-w-7xl mx-auto pr-6 flex items-stretch justify-between gap-6 h-20 z-10">
@@ -91,12 +81,12 @@ export function Header() {
             >
               {signedIn ? "Dashboard" : "Sign In"}
             </Link>
-            <Link
-              to="/membership"
+            <a
+              href="/#membership"
               className="cta-press skew-tag self-center hidden lg:inline-flex bg-cricket-red text-white px-7 py-3 font-display text-lg uppercase italic tracking-wider hover:bg-white hover:text-ink-black shrink-0"
             >
               <span>Become a Member</span>
-            </Link>
+            </a>
 
 
             <button
@@ -122,27 +112,16 @@ export function Header() {
         }`}
       >
         <nav className="flex flex-col h-full px-8 py-12 gap-2 font-display uppercase tracking-[0.2em] overflow-y-auto">
-          {NAV.map((item) =>
-            "to" in item ? (
-              <Link
-                key={item.label}
-                to={item.to}
-                onClick={() => setOpen(false)}
-                className="text-white text-3xl py-4 border-b border-white/10 hover:text-cricket-red transition-colors"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="text-white text-3xl py-4 border-b border-white/10 hover:text-cricket-red transition-colors"
-              >
-                {item.label}
-              </a>
-            ),
-          )}
+          {NAV.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="text-white text-3xl py-4 border-b border-white/10 hover:text-cricket-red transition-colors"
+            >
+              {item.label}
+            </a>
+          ))}
           <Link
             to={signedIn ? dashboardPath : "/auth"}
             onClick={() => setOpen(false)}
@@ -150,13 +129,13 @@ export function Header() {
           >
             {signedIn ? "Dashboard" : "Sign In"}
           </Link>
-          <Link
-            to="/membership"
+          <a
+            href="/#membership"
             onClick={() => setOpen(false)}
             className="cta-press skew-tag mt-4 self-start bg-cricket-red text-white px-7 py-4 font-display text-lg uppercase italic tracking-wider"
           >
             <span>Become a Member</span>
-          </Link>
+          </a>
 
         </nav>
       </div>

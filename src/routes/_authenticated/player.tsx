@@ -1,7 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AGE_GROUP_OPTIONS,
+  BATTING_STYLE_OPTIONS,
+  BOWLING_STYLE_OPTIONS,
+  GENDER_OPTIONS,
+  getPlayerProfileRows,
+  PLAYER_LABELS,
+  PRIMARY_SKILL_OPTIONS,
+  type PlayerProfile,
+} from "@/lib/player-profile-fields";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/player")({
@@ -91,9 +101,9 @@ function PlayerDashboard() {
           ) : !profile ? (
             <EmptyState message="No profile found. Complete your registration to build your player dashboard." />
           ) : editing ? (
-            <ProfileEditor profile={profile} onDone={() => { setEditing(false); qc.invalidateQueries({ queryKey: ["my-player-profile"] }); }} />
+            <ProfileEditor profile={profile} accountEmail={user?.email} onDone={() => { setEditing(false); qc.invalidateQueries({ queryKey: ["my-player-profile"] }); }} />
           ) : (
-            <ProfileView p={profile} />
+            <ProfileView p={profile} accountEmail={user?.email} />
           )}
         </section>
 
@@ -161,32 +171,19 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function ProfileView({ p }: { p: any }) {
-  const rows: [string, string][] = [
-    ["Name", `${p.first_name} ${p.last_name}`],
-    ["Gender", p.gender ?? "—"],
-    ["DOB", p.dob],
-    ["Contact Email", p.contact_email],
-    ["Phone", `${p.phone_country_code} ${p.phone_number}`],
-    ["Location", `${p.city}, ${p.state}, ${p.country}`],
-    ["Academy / Club", p.academy],
-    ["Age Group", p.age_group],
-    ["Primary Skill", p.primary_skill],
-    ["Batting Style", p.batting_style],
-    ["Bowling Style", p.bowling_style],
-    ["Bio", p.bio ?? "—"],
-  ];
+function ProfileView({ p, accountEmail }: { p: PlayerProfile; accountEmail?: string | null }) {
+  const rows = getPlayerProfileRows(p, "player", accountEmail);
 
   const { data: photoUrl } = useQuery({
     queryKey: ["signed", p.profile_photo_path],
     enabled: !!p.profile_photo_path,
-    queryFn: async () => (await supabase.storage.from("player-media").createSignedUrl(p.profile_photo_path, 3600)).data?.signedUrl,
+    queryFn: async () => (await supabase.storage.from("player-media").createSignedUrl(p.profile_photo_path!, 3600)).data?.signedUrl,
   });
   const { data: cvUrl } = useQuery({
     queryKey: ["signed", p.cv_storage_path],
     enabled: !!p.cv_storage_path,
     queryFn: async () =>
-      (await supabase.storage.from("player-media").createSignedUrl(p.cv_storage_path, 3600, { download: p.cv_storage_path.split("/").pop() })).data?.signedUrl,
+      (await supabase.storage.from("player-media").createSignedUrl(p.cv_storage_path!, 3600, { download: p.cv_storage_path!.split("/").pop() })).data?.signedUrl,
   });
 
   return (
@@ -200,32 +197,38 @@ function ProfileView({ p }: { p: any }) {
             <div className="h-px w-8 bg-cricket-red" />
             <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-cricket-red">Overview</div>
           </div>
-          <h2 className="font-display italic text-3xl md:text-4xl uppercase">{p.first_name} {p.last_name}</h2>
+          <h2 className="font-display italic text-3xl md:text-4xl uppercase text-ink-black">{p.first_name} {p.last_name}</h2>
           {p.headline && <p className="text-ink-soft text-sm mt-1">{p.headline}</p>}
         </div>
       </div>
       <div className="p-6 md:p-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-        {rows.map(([k, v]) => (
-          <div key={k} className={k === "Bio" ? "sm:col-span-2 lg:col-span-3" : ""}>
-            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-1.5">{k}</div>
-            <div className="text-sm leading-relaxed">{v}</div>
+        {rows.map((row) => (
+          <div key={row.key} className={row.fullWidth ? "sm:col-span-2 lg:col-span-3" : ""}>
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-1.5">{row.label}</div>
+            <div className="text-sm leading-relaxed">{row.value}</div>
           </div>
         ))}
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-1.5">CV / Resume</div>
-          {cvUrl ? (
-            <a href={cvUrl} download className="text-sm text-cricket-red hover:underline">↓ Download</a>
-          ) : (
-            <div className="text-sm text-ink-soft">—</div>
-          )}
-        </div>
+      </div>
+      <div className="border-t border-ink-black/10 p-6 md:p-8">
+        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-3">{PLAYER_LABELS.cv}</div>
+        {cvUrl ? (
+          <a href={cvUrl} download className="text-sm text-cricket-red hover:underline">↓ Download CV / Resume</a>
+        ) : (
+          <div className="text-sm text-ink-soft">No CV / Resume uploaded yet.</div>
+        )}
       </div>
     </div>
   );
 }
 
-function ProfileEditor({ profile, onDone }: { profile: any; onDone: () => void }) {
+function ProfileEditor({ profile, accountEmail, onDone }: { profile: PlayerProfile; accountEmail?: string | null; onDone: () => void }) {
   const [saving, setSaving] = useState(false);
+  const { data: photoUrl } = useQuery({
+    queryKey: ["signed", profile.profile_photo_path],
+    enabled: !!profile.profile_photo_path,
+    queryFn: async () => (await supabase.storage.from("player-media").createSignedUrl(profile.profile_photo_path!, 3600)).data?.signedUrl,
+  });
+
   return (
     <form
       onSubmit={async (e) => {
@@ -234,7 +237,7 @@ function ProfileEditor({ profile, onDone }: { profile: any; onDone: () => void }
         const newPhoto = fd.get("new_profile_photo") as File | null;
         const newCv = fd.get("new_cv") as File | null;
         setSaving(true);
-        const update: any = Object.fromEntries(fd.entries());
+        const update: Record<string, string | null> = Object.fromEntries(fd.entries()) as Record<string, string>;
         delete update.new_profile_photo;
         delete update.new_cv;
         if (update.bio === "") update.bio = null;
@@ -267,47 +270,76 @@ function ProfileEditor({ profile, onDone }: { profile: any; onDone: () => void }
         </div>
         <h2 className="font-display italic text-3xl uppercase">Edit Profile</h2>
       </div>
-      <div className="p-6 md:p-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-        <F name="first_name" label="First Name" defaultValue={profile.first_name} />
-        <F name="last_name" label="Last Name" defaultValue={profile.last_name} />
-        <div className="sm:col-span-2 lg:col-span-3">
-          <F name="headline" label="Profile Headline" defaultValue={profile.headline ?? ""} />
-        </div>
-        <S name="gender" label="Gender" defaultValue={profile.gender ?? ""} options={[
-          ["male", "Male"], ["female", "Female"], ["other", "Other"],
-        ]} />
-        <FileF name="new_profile_photo" label="Replace Profile Photo" accept="image/*" />
-        <FileF name="new_cv" label="Replace CV / Resume" accept=".pdf,.doc,.docx" />
-        <F name="dob" label="DOB" type="date" defaultValue={profile.dob} />
-        <F name="contact_email" label="Contact Email" type="email" defaultValue={profile.contact_email} />
-        <F name="phone_country_code" label="Phone Country Code" defaultValue={profile.phone_country_code} />
-        <F name="phone_number" label="Phone Number" defaultValue={profile.phone_number} />
-        <F name="city" label="City" defaultValue={profile.city} />
-        <F name="state" label="State" defaultValue={profile.state} />
-        <F name="country" label="Country" defaultValue={profile.country} />
-        <F name="academy" label="Academy / Club" defaultValue={profile.academy} />
-        <S name="age_group" label="Age Group" defaultValue={profile.age_group} options={[
-          ["youth_11_14", "Youth 11-14"], ["youth_15_19", "Youth 15-19"], ["adult_19_plus", "Adult 19+"],
-        ]} />
-        <S name="primary_skill" label="Primary Skill" defaultValue={profile.primary_skill} options={[
-          ["batter","Batter"],["bowler","Bowler"],["wicket_keeper","Wicket Keeper"],
-          ["batting_all_rounder","Batting All-Rounder"],["bowling_all_rounder","Bowling All-Rounder"],
-        ]} />
-        <S name="batting_style" label="Batting Style" defaultValue={profile.batting_style} options={[
-          ["right_handed","Right Handed"],["left_handed","Left Handed"],
-        ]} />
-        <S name="bowling_style" label="Bowling Style" defaultValue={profile.bowling_style} options={[
-          ["right_arm_pace","Right-arm pace"],["right_arm_medium","Right-arm medium"],
-          ["left_arm_pace","Left-arm pace"],["left_arm_medium","Left-arm medium"],
-          ["off_spin","Off-spin"],["leg_spin","Leg-spin"],
-          ["left_arm_orthodox","Left-arm orthodox"],["chinaman","Chinaman"],
-        ]} />
-        <div className="sm:col-span-2 lg:col-span-3">
-          <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-2">Bio</label>
-          <textarea name="bio" defaultValue={profile.bio ?? ""} rows={4}
-            className="w-full border border-ink-black/20 px-3 py-2.5 text-sm focus:border-cricket-red focus:outline-none transition-colors" />
-        </div>
+
+      <div className="p-6 md:p-8 space-y-10">
+        <EditorSection title="Personal">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+            <F name="first_name" label="First Name" defaultValue={profile.first_name} />
+            <F name="last_name" label="Last Name" defaultValue={profile.last_name} />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <F name="headline" label={PLAYER_LABELS.profileHeadline} defaultValue={profile.headline ?? ""} />
+            </div>
+            <S name="gender" label={PLAYER_LABELS.gender} defaultValue={profile.gender ?? ""} options={GENDER_OPTIONS} />
+            <F name="dob" label={PLAYER_LABELS.dob} type="date" defaultValue={profile.dob} />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-2">{PLAYER_LABELS.profilePhoto}</div>
+              {photoUrl && (
+                <img src={photoUrl} alt="" className="size-16 rounded-full object-cover border border-ink-black/10 mb-3" />
+              )}
+              <FileF name="new_profile_photo" label="Replace Profile Photo" accept="image/*" />
+            </div>
+          </div>
+        </EditorSection>
+
+        <EditorSection title="Contact">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+            <div className="sm:col-span-2 lg:col-span-3">
+              <ReadOnlyField label={PLAYER_LABELS.accountEmail} value={accountEmail ?? "—"} />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <F name="contact_email" label={PLAYER_LABELS.contactEmail} type="email" defaultValue={profile.contact_email} />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-2">{PLAYER_LABELS.phone}</div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <F name="phone_country_code" label="Country Code" defaultValue={profile.phone_country_code} hideLabel />
+                <F name="phone_number" label="Phone Number" defaultValue={profile.phone_number} hideLabel />
+              </div>
+            </div>
+          </div>
+        </EditorSection>
+
+        <EditorSection title="Location">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+            <F name="city" label={PLAYER_LABELS.city} defaultValue={profile.city} />
+            <F name="state" label={PLAYER_LABELS.state} defaultValue={profile.state} />
+            <F name="country" label={PLAYER_LABELS.country} defaultValue={profile.country} />
+          </div>
+        </EditorSection>
+
+        <EditorSection title="Cricket Profile">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+            <F name="academy" label={PLAYER_LABELS.academy} defaultValue={profile.academy} />
+            <S name="age_group" label={PLAYER_LABELS.ageGroup} defaultValue={profile.age_group} options={AGE_GROUP_OPTIONS} />
+            <S name="primary_skill" label={PLAYER_LABELS.primarySkill} defaultValue={profile.primary_skill} options={PRIMARY_SKILL_OPTIONS} />
+            <S name="batting_style" label={PLAYER_LABELS.battingStyle} defaultValue={profile.batting_style} options={BATTING_STYLE_OPTIONS} />
+            <S name="bowling_style" label={PLAYER_LABELS.bowlingStyle} defaultValue={profile.bowling_style} options={BOWLING_STYLE_OPTIONS} />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-2">{PLAYER_LABELS.bio}</label>
+              <textarea name="bio" defaultValue={profile.bio ?? ""} rows={4}
+                className="w-full border border-ink-black/20 px-3 py-2.5 text-sm focus:border-cricket-red focus:outline-none transition-colors" />
+            </div>
+          </div>
+        </EditorSection>
+
+        <EditorSection title="Documents">
+          <FileF name="new_cv" label={`Upload ${PLAYER_LABELS.cv}`} accept=".pdf,.doc,.docx" />
+          {profile.cv_storage_path && (
+            <p className="text-xs text-ink-soft mt-2">A CV / Resume is already on file. Upload a new file to replace it.</p>
+          )}
+        </EditorSection>
       </div>
+
       <div className="border-t border-ink-black/10 p-6 md:p-8 flex items-center gap-4">
         <button disabled={saving} className="cta-press skew-tag bg-cricket-red text-white px-6 py-3 font-display uppercase italic text-sm tracking-widest">
           <span>{saving ? "Saving..." : "Save Changes"}</span>
@@ -320,10 +352,30 @@ function ProfileEditor({ profile, onDone }: { profile: any; onDone: () => void }
   );
 }
 
-function F({ name, label, type = "text", defaultValue }: any) {
+function EditorSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-cricket-red mb-4">{title}</div>
+      {children}
+    </section>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-2">{label}</label>
+      <div className="w-full border border-ink-black/10 bg-ink-black/[0.02] px-3 py-2.5 text-sm text-ink-soft">{value}</div>
+    </div>
+  );
+}
+
+function F({ name, label, type = "text", defaultValue, hideLabel }: { name: string; label: string; type?: string; defaultValue?: string; hideLabel?: boolean }) {
+  return (
+    <div>
+      {!hideLabel && (
+        <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-ink-soft mb-2">{label}</label>
+      )}
       <input name={name} type={type} defaultValue={defaultValue}
         className="w-full border border-ink-black/20 px-3 py-2.5 text-sm focus:border-cricket-red focus:outline-none transition-colors" />
     </div>

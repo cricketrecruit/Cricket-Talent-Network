@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,8 +8,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { resolveRolePathForUser } from "@/lib/role-redirect";
+import { PlayerSignupWizard } from "@/components/player-signup/PlayerSignupWizard";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { tab?: "player" | "recruiter" } => ({
+    tab: search.tab === "player" || search.tab === "recruiter" ? search.tab : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign In · Cricket Recruit" },
@@ -30,7 +34,8 @@ export const Route = createFileRoute("/auth")({
 type Tab = "signin" | "player" | "recruiter" | "forgot";
 
 function AuthPage() {
-  const [tab, setTab] = useState<Tab>("signin");
+  const { tab: initialTab } = Route.useSearch();
+  const [tab, setTab] = useState<Tab>(initialTab ?? "signin");
   const copy = {
     signin: {
       eyebrow: "Welcome back",
@@ -70,54 +75,58 @@ function AuthPage() {
         />
       </div>
 
-      <div className="relative z-10 grid lg:grid-cols-[1.05fr_1fr]">
+      <div className="relative z-10 grid lg:grid-cols-[1.05fr_1fr] lg:items-stretch">
 
         {/* Left — editorial panel */}
-        <aside className="hidden lg:flex flex-col justify-between p-10 xl:p-14 border-r border-white/10 relative">
-          <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.3em] text-white/50">
-            <span className="h-px w-8 bg-cricket-red" />
-            {copy.eyebrow}
-          </div>
+        <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden border-r border-white/10 relative">
+          <div className="flex flex-col h-full w-full p-10 xl:p-14">
+            <div className="shrink-0">
+              <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.3em] text-white/50">
+                <span className="h-px w-8 bg-cricket-red" />
+                {copy.eyebrow}
+              </div>
 
-          <div className="space-y-8 max-w-xl">
-            <h1 className="font-display uppercase text-5xl xl:text-6xl leading-[0.95] tracking-tight">
-              {copy.title.split(" ").slice(0, -2).join(" ")}{" "}
-              <span className="italic text-cricket-red">
-                {copy.title.split(" ").slice(-2).join(" ")}
-              </span>
-            </h1>
-            <p className="text-white/70 text-lg leading-relaxed max-w-md">{copy.sub}</p>
+              <div className="space-y-8 max-w-xl mt-8">
+                <h1 className="font-display uppercase text-5xl xl:text-6xl leading-[0.95] tracking-tight">
+                  {copy.title.split(" ").slice(0, -2).join(" ")}{" "}
+                  <span className="italic text-cricket-red">
+                    {copy.title.split(" ").slice(-2).join(" ")}
+                  </span>
+                </h1>
+                <p className="text-white/70 text-lg leading-relaxed max-w-md">{copy.sub}</p>
 
-            <div className="grid grid-cols-3 gap-6 pt-4 border-t border-white/10">
-              {[
-                ["2.4k+", "Players scouted"],
-                ["180+", "Recruiter orgs"],
-                ["27", "Countries"],
-              ].map(([n, l]) => (
-                <div key={l}>
-                  <div className="font-display text-3xl text-white">{n}</div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-white/50 mt-1">
-                    {l}
-                  </div>
+                <div className="grid grid-cols-3 gap-6 pt-4 border-t border-white/10">
+                  {[
+                    ["2.4k+", "Players scouted"],
+                    ["180+", "Recruiter orgs"],
+                    ["27", "Countries"],
+                  ].map(([n, l]) => (
+                    <div key={l}>
+                      <div className="font-display text-3xl text-white">{n}</div>
+                      <div className="text-[10px] font-mono uppercase tracking-widest text-white/50 mt-1">
+                        {l}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
 
-          <blockquote className="max-w-md border-l-2 border-cricket-red pl-5">
-            <p className="text-sm text-white/75 italic leading-relaxed">
-              "Signed my first franchise contract eight weeks after uploading footage here. The
-              network is real."
-            </p>
-            <footer className="text-[10px] font-mono uppercase tracking-widest text-white/50 mt-3">
-              — A. Sharma · U-19 all-rounder
-            </footer>
-          </blockquote>
+            <blockquote className="mt-auto shrink-0 max-w-md border-l-2 border-cricket-red pl-5 pt-10">
+              <p className="text-sm text-white/75 italic leading-relaxed">
+                "Signed my first franchise contract eight weeks after uploading footage here. The
+                network is real."
+              </p>
+              <footer className="text-[10px] font-mono uppercase tracking-widest text-white/50 mt-3">
+                — A. Sharma · U-19 all-rounder
+              </footer>
+            </blockquote>
+          </div>
         </aside>
 
         {/* Right — form panel */}
-        <section className="flex items-center justify-center p-6 sm:p-10 lg:p-12">
-          <div className="w-full max-w-md">
+        <section className="flex lg:items-start justify-center p-6 sm:p-10 lg:p-12 lg:min-h-screen lg:overflow-y-auto">
+          <div className={`w-full ${tab === "player" || tab === "recruiter" ? "max-w-2xl" : "max-w-md"}`}>
             {/* Segmented control */}
             <div className="relative mb-8 p-1 bg-white/5 border border-white/10 rounded-full grid grid-cols-3 text-[11px] font-mono uppercase tracking-widest">
               <div
@@ -150,9 +159,9 @@ function AuthPage() {
               <h1 className="font-display uppercase text-3xl leading-tight">{copy.title}</h1>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.8)]">
+            <div className={`rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.8)] ${tab === "player" ? "min-h-[28rem]" : ""}`}>
               {tab === "signin" && <SignInForm onForgotPassword={() => setTab("forgot")} />}
-              {tab === "player" && <PlayerSignUp />}
+              {tab === "player" && <PlayerSignupWizard />}
               {tab === "recruiter" && <RecruiterSignUp />}
               {tab === "forgot" && <ForgotPasswordForm />}
             </div>
@@ -263,191 +272,6 @@ function ForgotPasswordForm() {
   );
 }
 
-const playerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  first_name: z.string().min(1),
-  last_name: z.string().min(1),
-  dob: z.string().min(1),
-  headline: z.string().min(1),
-  gender: z.enum(["male", "female", "other"]),
-  contact_email: z.string().email(),
-  phone_country_code: z.string().min(1),
-  phone_number: z.string().min(4),
-  city: z.string().min(1),
-  state: z.string().min(1),
-  country: z.string().min(1),
-  academy: z.string().min(1),
-  age_group: z.enum(["youth_11_14", "youth_15_19", "adult_19_plus"]),
-  primary_skill: z.enum(["batter", "bowler", "wicket_keeper", "batting_all_rounder", "bowling_all_rounder"]),
-  batting_style: z.enum(["right_handed", "left_handed"]),
-  bowling_style: z.enum(["right_arm_pace", "right_arm_medium", "left_arm_pace", "left_arm_medium", "off_spin", "leg_spin", "left_arm_orthodox", "chinaman"]),
-  media_consent: z.literal("true", { message: "You must agree to the Media Consent & Release Terms" }),
-});
-
-function PlayerSignUp() {
-  const navigate = useNavigate();
-  const assign = useServerFn(assignRole);
-  const [loading, setLoading] = useState(false);
-  return (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        const profilePhoto = fd.get("profile_photo") as File | null;
-        const cv = fd.get("cv") as File | null;
-        const raw = Object.fromEntries(fd.entries());
-        const parsed = playerSchema.safeParse(raw);
-        if (!parsed.success) return toast.error(parsed.error.issues[0].message);
-        if (!profilePhoto || profilePhoto.size === 0) return toast.error("Profile photo is required");
-        setLoading(true);
-        const v = parsed.data;
-        const { data, error } = await supabase.auth.signUp({
-          email: v.email,
-          password: v.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth`,
-            data: { full_name: `${v.first_name} ${v.last_name}` },
-          },
-        });
-        if (error || !data.user) {
-          setLoading(false);
-          return toast.error(error?.message ?? "Signup failed");
-        }
-        // Sign in immediately (auto-confirm on)
-        await supabase.auth.signInWithPassword({ email: v.email, password: v.password });
-        await assign({ data: { userId: data.user.id, role: "player" } });
-
-        const userId = data.user.id;
-        const photoPath = `${userId}/profile-photo-${Date.now()}-${profilePhoto.name}`;
-        const { error: photoErr } = await supabase.storage.from("player-media").upload(photoPath, profilePhoto);
-        if (photoErr) { setLoading(false); return toast.error(photoErr.message); }
-
-        let cvPath: string | null = null;
-        if (cv && cv.size > 0) {
-          cvPath = `${userId}/cv-${Date.now()}-${cv.name}`;
-          const { error: cvErr } = await supabase.storage.from("player-media").upload(cvPath, cv);
-          if (cvErr) { setLoading(false); return toast.error(cvErr.message); }
-        }
-
-        const { error: pErr } = await supabase.from("player_profiles").insert({
-          user_id: userId,
-          first_name: v.first_name,
-          last_name: v.last_name,
-          dob: v.dob,
-          headline: v.headline,
-          gender: v.gender,
-          contact_email: v.contact_email,
-          phone_country_code: v.phone_country_code,
-          phone_number: v.phone_number,
-          city: v.city,
-          state: v.state,
-          country: v.country,
-          academy: v.academy,
-          age_group: v.age_group,
-          primary_skill: v.primary_skill,
-          batting_style: v.batting_style,
-          bowling_style: v.bowling_style,
-          profile_photo_path: photoPath,
-          cv_storage_path: cvPath,
-          media_consent: true,
-        });
-        setLoading(false);
-        if (pErr) return toast.error(pErr.message);
-        toast.success("Account created");
-        navigate({ to: "/player" });
-      }}
-      className="space-y-4"
-    >
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field name="email" label="Account Email" type="email" required />
-        <Field name="password" label="Password (min 8)" type="password" required />
-        <Field name="first_name" label="First Name" required />
-        <Field name="last_name" label="Last Name" required />
-        <Field name="dob" label="Date of Birth" type="date" required />
-        <SelectField name="gender" label="Gender" required options={[
-          ["male", "Male"],
-          ["female", "Female"],
-          ["other", "Other"],
-        ]} />
-        <div className="sm:col-span-2">
-          <Field name="headline" label="Profile Headline" required />
-        </div>
-        <FileField name="profile_photo" label="Profile Photo" accept="image/*" required />
-        <FileField name="cv" label="CV / Resume (optional)" accept=".pdf,.doc,.docx" />
-        <Field name="contact_email" label="Contact Email" type="email" required />
-        <Field name="phone_country_code" label="Phone Country Code (e.g. +1)" required />
-        <Field name="phone_number" label="Phone Number" required />
-        <Field name="city" label="City of Residence" required />
-        <Field name="state" label="State" required />
-        <Field name="country" label="Country" required />
-        <Field name="academy" label="Academy / Club" required />
-        <SelectField name="age_group" label="Age Group" required options={[
-          ["youth_11_14", "Youth Cricket (11-14 years)"],
-          ["youth_15_19", "Youth Cricket (15-19 years)"],
-          ["adult_19_plus", "Adults: 19+ years"],
-        ]} />
-        <SelectField name="primary_skill" label="Primary Skill" required options={[
-          ["batter", "Batter"],
-          ["bowler", "Bowler"],
-          ["wicket_keeper", "Wicket Keeper"],
-          ["batting_all_rounder", "Batting All-Rounder"],
-          ["bowling_all_rounder", "Bowling All-Rounder"],
-        ]} />
-        <SelectField name="batting_style" label="Batting Style" required options={[
-          ["right_handed", "Right Handed"],
-          ["left_handed", "Left Handed"],
-        ]} />
-        <SelectField name="bowling_style" label="Bowling Style" required options={[
-          ["right_arm_pace", "Right-arm pace"],
-          ["right_arm_medium", "Right-arm medium"],
-          ["left_arm_pace", "Left-arm pace"],
-          ["left_arm_medium", "Left-arm medium"],
-          ["off_spin", "Off-spin"],
-          ["leg_spin", "Leg-spin"],
-          ["left_arm_orthodox", "Left-arm orthodox"],
-          ["chinaman", "Chinaman"],
-        ]} />
-      </div>
-
-      <MediaConsent />
-
-      <button disabled={loading} className="cta-press skew-tag w-full bg-cricket-red text-white py-3 font-display uppercase italic tracking-widest">
-        <span>{loading ? "Creating..." : "Create Player Account"}</span>
-      </button>
-    </form>
-  );
-}
-
-function MediaConsent() {
-  return (
-    <div className="border border-white/15 bg-white/[0.03] p-4 space-y-3">
-      <div className="text-[10px] font-mono uppercase tracking-widest text-white/60 font-bold">
-        Media Consent &amp; Release
-      </div>
-      <p className="text-xs text-white/60 leading-relaxed">
-        I hereby grant permission to Cricket Recruit to capture, use, reproduce, publish, and distribute my
-        photographs, videos, audio recordings, and other media featuring me for the purpose of showcasing my
-        cricket skills, promoting player profiles, marketing, advertising, social media, websites, digital
-        platforms, print materials, and other promotional or educational content.
-      </p>
-      <p className="text-xs text-white/60 leading-relaxed">
-        I understand that these materials may be edited, modified, or combined with other content and may be
-        used without further notice or compensation. I release Cricket Recruit from any claims arising from the
-        use of such media for these purposes.
-      </p>
-      <p className="text-xs text-white/60 leading-relaxed">
-        By accepting this consent, I confirm that I have read, understood, and agree to the use of my media as
-        described above.
-      </p>
-      <label className="flex items-start gap-2 text-xs text-white/80 pt-1">
-        <input type="checkbox" name="media_consent" value="true" required className="mt-0.5" />
-        I Agree to the Media Consent and Release Terms.
-      </label>
-    </div>
-  );
-}
-
 const recruiterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -499,36 +323,63 @@ function RecruiterSignUp() {
         toast.success("Account created — pending admin approval");
         navigate({ to: "/recruiter" });
       }}
-      className="space-y-4"
+      className="space-y-8"
     >
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field name="email" label="Email" type="email" required />
-        <Field name="password" label="Password (min 8)" type="password" required />
-        <Field name="full_name" label="Full Name" required />
-        <Field name="organization_name" label="Organization / Team Name" required />
-        <Field name="role_title" label="Role / Title" required />
-        <SelectField name="organization_type" label="Organization Type" required options={[
-          ["Franchise", "Franchise"],
-          ["Academy", "Academy"],
-          ["Team", "Team"],
-          ["Sponsor", "Sponsor"],
-          ["Scout", "Independent Scout"],
-        ]} />
-        <Field name="country" label="Country" required />
-        <Field name="city" label="City" required />
-        <Field name="website" label="Website (optional)" />
-        <Field name="phone" label="Phone (optional)" />
-      </div>
-      <div>
-        <label className="block text-[10px] font-mono uppercase tracking-widest text-white/60 mb-2 font-bold">Reason for Access *</label>
-        <textarea name="reason_for_access" required rows={3}
-          className="w-full bg-white/5 border border-white/20 text-white px-3 py-2.5 text-sm focus:outline-none focus:border-cricket-red" />
-      </div>
-      <p className="text-xs text-white/60">Recruiter accounts require admin approval before you can browse players.</p>
+      <FormSection title="Account">
+        <div className="grid sm:grid-cols-2 gap-5">
+          <Field name="email" label="Account Email" type="email" required />
+          <Field name="password" label="Password (min 8)" type="password" required />
+        </div>
+      </FormSection>
+
+      <FormSection title="Organization">
+        <div className="grid sm:grid-cols-2 gap-5">
+          <Field name="full_name" label="Full Name" required />
+          <Field name="organization_name" label="Organization / Team Name" required />
+          <Field name="role_title" label="Role / Title" required />
+          <SelectField name="organization_type" label="Organization Type" required options={[
+            ["Franchise", "Franchise"],
+            ["Academy", "Academy"],
+            ["Team", "Team"],
+            ["Sponsor", "Sponsor"],
+            ["Scout", "Independent Scout"],
+          ]} />
+        </div>
+      </FormSection>
+
+      <FormSection title="Location">
+        <div className="grid sm:grid-cols-2 gap-5">
+          <Field name="country" label="Country" required />
+          <Field name="city" label="City" required />
+          <Field name="website" label="Website (optional)" />
+          <Field name="phone" label="Phone (optional)" />
+        </div>
+      </FormSection>
+
+      <FormSection title="Access Request">
+        <div>
+          <label className="block text-[10px] font-mono uppercase tracking-widest text-white/60 mb-2 font-bold">
+            Reason for Access<span className="text-cricket-red ml-1">*</span>
+          </label>
+          <textarea name="reason_for_access" required rows={4}
+            className="w-full bg-white/5 border border-white/20 text-white px-3 py-2.5 text-sm focus:outline-none focus:border-cricket-red" />
+        </div>
+        <p className="text-xs text-white/60 mt-4">Recruiter accounts require admin approval before you can browse players.</p>
+      </FormSection>
+
       <button disabled={loading} className="cta-press skew-tag w-full bg-cricket-red text-white py-3 font-display uppercase italic tracking-widest">
         <span>{loading ? "Creating..." : "Create Recruiter Account"}</span>
       </button>
     </form>
+  );
+}
+
+function FormSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-4">
+      <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-cricket-red">{title}</div>
+      {children}
+    </section>
   );
 }
 

@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-
 import heroImg from "@/assets/hero-stadium.jpg";
 import heroVideo from "@/assets/hero-video.mp4";
 
@@ -52,12 +50,12 @@ export function Hero() {
                 domestic and international leagues.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  to="/membership"
+                <a
+                  href="/#membership"
                   className="cta-press skew-tag bg-white text-ink-black px-7 py-3 font-display uppercase italic text-base tracking-wider hover:bg-cricket-red hover:text-white"
                 >
                   <span>Become a Member</span>
-                </Link>
+                </a>
 
                 <a
                   href="/#about"

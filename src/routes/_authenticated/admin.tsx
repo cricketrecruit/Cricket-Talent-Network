@@ -93,7 +93,12 @@ function AdminDashboard() {
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
         {viewPlayerId ? (
-          <PlayerDetail id={viewPlayerId} onBack={() => setViewPlayerId(null)} />
+          <PlayerDetail
+            id={viewPlayerId}
+            audience="admin"
+            accountEmail={(players ?? []).find((p: { user_id: string }) => p.user_id === viewPlayerId)?.profiles?.email}
+            onBack={() => setViewPlayerId(null)}
+          />
         ) : viewRecruiterId ? (
           <RecruiterDetail id={viewRecruiterId} onBack={() => setViewRecruiterId(null)} />
         ) : (

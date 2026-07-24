@@ -6,13 +6,13 @@ import cricketRecruitLogo from "@/assets/cricket-recruit-logo.png";
 const NAV = [
   { href: "/#about", label: "About" },
   { href: "/#services", label: "Services" },
-  { to: "/membership", label: "Membership" },
+  { href: "/#membership", label: "Membership" },
   { href: "/#contact", label: "Contact" },
 ];
 
 const TIERS = [
-  { to: "/membership", label: "Ever Free Player" },
-  { to: "/membership", label: "Franchise Scout" },
+  { href: "/#membership", label: "Ever Free Player" },
+  { href: "/#membership", label: "Franchise Scout" },
   { href: "/#contact", label: "Become a Member" },
   { href: "/#contact", label: "Partner With Us" },
 ];
@@ -64,21 +64,12 @@ export function Footer() {
             <ul className="space-y-3">
               {NAV.map((item) => (
                 <li key={item.label}>
-                  {"to" in item ? (
-                    <Link
-                      to={item.to}
-                      className="story-link text-white/85 hover:text-cricket-red transition-colors text-sm"
-                    >
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <a
-                      href={item.href}
-                      className="story-link text-white/85 hover:text-cricket-red transition-colors text-sm"
-                    >
-                      {item.label}
-                    </a>
-                  )}
+                  <a
+                    href={item.href}
+                    className="story-link text-white/85 hover:text-cricket-red transition-colors text-sm"
+                  >
+                    {item.label}
+                  </a>
                 </li>
               ))}
             </ul>
@@ -92,21 +83,12 @@ export function Footer() {
             <ul className="space-y-3">
               {TIERS.map((item) => (
                 <li key={item.label}>
-                  {"to" in item ? (
-                    <Link
-                      to={item.to}
-                      className="story-link text-white/85 hover:text-cricket-red transition-colors text-sm"
-                    >
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <a
-                      href={item.href}
-                      className="story-link text-white/85 hover:text-cricket-red transition-colors text-sm"
-                    >
-                      {item.label}
-                    </a>
-                  )}
+                  <a
+                    href={item.href}
+                    className="story-link text-white/85 hover:text-cricket-red transition-colors text-sm"
+                  >
+                    {item.label}
+                  </a>
                 </li>
               ))}
             </ul>
