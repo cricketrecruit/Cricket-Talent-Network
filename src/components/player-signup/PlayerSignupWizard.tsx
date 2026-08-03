@@ -316,7 +316,9 @@ export function PlayerSignupWizard() {
       }
 
       toast.success("Account created");
-      navigate({ to: "/player" });
+      navigate({ to: "/player", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong creating your account. Please try again.");
     } finally {
       setLoading(false);
     }

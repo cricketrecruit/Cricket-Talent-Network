@@ -206,16 +206,21 @@ function SignInForm({ onForgotPassword }: { onForgotPassword: () => void }) {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         setLoading(true);
-        const { data: signInData, error } = await supabase.auth.signInWithPassword({
-          email: String(fd.get("email")),
-          password: String(fd.get("password")),
-        });
-        setLoading(false);
-        if (error) return toast.error(error.message);
-        toast.success("Signed in");
-        const uid = signInData.user?.id;
-        const dest = uid ? await resolveRolePathForUser(uid) : "/auth";
-        navigate({ to: dest });
+        try {
+          const { data: signInData, error } = await supabase.auth.signInWithPassword({
+            email: String(fd.get("email")),
+            password: String(fd.get("password")),
+          });
+          if (error) return toast.error(error.message);
+          const uid = signInData.user?.id;
+          const dest = uid ? await resolveRolePathForUser(uid) : "/auth";
+          toast.success("Signed in");
+          navigate({ to: dest, replace: true });
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Something went wrong signing in. Please try again.");
+        } finally {
+          setLoading(false);
+        }
       }}
       className="space-y-4"
     >
@@ -321,7 +326,9 @@ function RecruiterSignUp() {
           });
           if (rErr) return toast.error(rErr.message);
           toast.success("Account created — pending admin approval");
-          navigate({ to: "/recruiter" });
+          navigate({ to: "/recruiter", replace: true });
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Something went wrong creating your account. Please try again.");
         } finally {
           setLoading(false);
         }
