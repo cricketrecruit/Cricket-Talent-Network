@@ -262,8 +262,11 @@ export function PlayerSignupWizard() {
         toast.error(error?.message ?? "Signup failed");
         return;
       }
+      if (!data.session) {
+        toast.error("Please check your email to confirm your account before signing in.");
+        return;
+      }
 
-      await supabase.auth.signInWithPassword({ email: v.email, password: v.password });
       await assign({ data: { userId: data.user.id, role: "player" } });
 
       const userId = data.user.id;

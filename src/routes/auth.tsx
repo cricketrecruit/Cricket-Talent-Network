@@ -298,30 +298,33 @@ function RecruiterSignUp() {
         const parsed = recruiterSchema.safeParse(Object.fromEntries(fd.entries()));
         if (!parsed.success) return toast.error(parsed.error.issues[0].message);
         setLoading(true);
-        const v = parsed.data;
-        const { data, error } = await supabase.auth.signUp({
-          email: v.email,
-          password: v.password,
-          options: { emailRedirectTo: `${window.location.origin}/auth`, data: { full_name: v.full_name } },
-        });
-        if (error || !data.user) { setLoading(false); return toast.error(error?.message ?? "Signup failed"); }
-        await supabase.auth.signInWithPassword({ email: v.email, password: v.password });
-        await assign({ data: { userId: data.user.id, role: "recruiter" } });
-        const { error: rErr } = await supabase.from("recruiter_profiles").insert({
-          user_id: data.user.id,
-          organization_name: v.organization_name,
-          role_title: v.role_title,
-          organization_type: v.organization_type,
-          country: v.country,
-          city: v.city,
-          website: v.website || null,
-          phone: v.phone || null,
-          reason_for_access: v.reason_for_access,
-        });
-        setLoading(false);
-        if (rErr) return toast.error(rErr.message);
-        toast.success("Account created — pending admin approval");
-        navigate({ to: "/recruiter" });
+        try {
+          const v = parsed.data;
+          const { data, error } = await supabase.auth.signUp({
+            email: v.email,
+            password: v.password,
+            options: { emailRedirectTo: `${window.location.origin}/auth`, data: { full_name: v.full_name } },
+          });
+          if (error || !data.user) return toast.error(error?.message ?? "Signup failed");
+          if (!data.session) return toast.error("Please check your email to confirm your account before signing in.");
+          await assign({ data: { userId: data.user.id, role: "recruiter" } });
+          const { error: rErr } = await supabase.from("recruiter_profiles").insert({
+            user_id: data.user.id,
+            organization_name: v.organization_name,
+            role_title: v.role_title,
+            organization_type: v.organization_type,
+            country: v.country,
+            city: v.city,
+            website: v.website || null,
+            phone: v.phone || null,
+            reason_for_access: v.reason_for_access,
+          });
+          if (rErr) return toast.error(rErr.message);
+          toast.success("Account created — pending admin approval");
+          navigate({ to: "/recruiter" });
+        } finally {
+          setLoading(false);
+        }
       }}
       className="space-y-8"
     >
