@@ -67,6 +67,7 @@ export const step4Schema = z.object({
 });
 
 export const step5Schema = z.object({
+  bio: z.string().min(1, "Bio is required"),
   media_consent: z.literal("true", { message: "You must agree to the Media Consent & Release Terms" }),
 });
 
@@ -105,5 +106,6 @@ export const EMPTY_SIGNUP_VALUES: Omit<PlayerSignupValues, "media_consent"> & { 
   primary_skill: "" as PlayerSignupValues["primary_skill"],
   batting_style: "" as PlayerSignupValues["batting_style"],
   bowling_style: "" as PlayerSignupValues["bowling_style"],
+  bio: "",
   media_consent: "",
 };

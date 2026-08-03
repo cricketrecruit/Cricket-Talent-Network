@@ -52,11 +52,7 @@ export function Contact() {
               Headquarters
             </div>
             <address className="not-italic text-white/85 leading-relaxed">
-              9179 Red Branch Rd
-              <br />
-              Columbia, MD 21045
-              <br />
-              United States
+              Washington D.C, USA
             </address>
           </div>
           <div>
@@ -64,10 +60,10 @@ export function Contact() {
               Direct Line
             </div>
             <a
-              href="tel:+14437610655"
+              href="tel:+14432343331"
               className="story-link text-white/85 hover:text-cricket-red transition-colors"
             >
-              +1 (443) 761-0655
+              +1 (443) 234-3331
             </a>
           </div>
           <div>

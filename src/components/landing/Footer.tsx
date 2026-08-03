@@ -51,7 +51,7 @@ export function Footer() {
                 className="animate-ball-spin inline-block size-5 rounded-full bg-cricket-red ring-2 ring-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]"
               />
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/50">
-                Est. 2026, Columbia, MD
+                Est. 2026, Washington, D.C.
               </span>
             </div>
           </div>

@@ -44,13 +44,11 @@ export const Route = createFileRoute("/")({
             "A professional cricket scouting platform connecting verified players with franchises, sponsors, and academies.",
           address: {
             "@type": "PostalAddress",
-            streetAddress: "9179 Red Branch Rd",
-            addressLocality: "Columbia",
-            addressRegion: "MD",
-            postalCode: "21045",
+            addressLocality: "Washington",
+            addressRegion: "DC",
             addressCountry: "US",
           },
-          telephone: "+1-443-761-0655",
+          telephone: "+1-443-234-3331",
           email: "cricketrecruit@gmail.com",
 
           sameAs: [

@@ -226,6 +226,7 @@ export function PlayerSignupWizard() {
 
   const handleSubmit = async () => {
     const result = step5Schema.safeParse({
+      bio: values.bio,
       media_consent: values.media_consent === "true" ? "true" : undefined,
     });
     if (!result.success) {
@@ -243,6 +244,10 @@ export function PlayerSignupWizard() {
     }
     if (!profilePhoto) {
       toast.error("Profile photo is required");
+      return;
+    }
+    if (!cv) {
+      toast.error("CV / Resume is required");
       return;
     }
 
@@ -305,6 +310,7 @@ export function PlayerSignupWizard() {
         primary_skill: v.primary_skill,
         batting_style: v.batting_style,
         bowling_style: v.bowling_style,
+        bio: v.bio,
         profile_photo_path: photoPath,
         cv_storage_path: cvPath,
         media_consent: true,
@@ -472,7 +478,18 @@ export function PlayerSignupWizard() {
         <div className="space-y-6">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-widest text-white/60 mb-2 font-bold">
-              {PLAYER_LABELS.cv} (optional)
+              {PLAYER_LABELS.bio}<span className="text-cricket-red ml-1">*</span>
+            </label>
+            <textarea
+              value={values.bio}
+              onChange={(e) => patch({ bio: e.target.value })}
+              rows={4}
+              className="w-full bg-white/5 border border-white/20 text-white px-3 py-2.5 text-sm focus:outline-none focus:border-cricket-red"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-mono uppercase tracking-widest text-white/60 mb-2 font-bold">
+              {PLAYER_LABELS.cv}<span className="text-cricket-red ml-1">*</span>
             </label>
             <input
               type="file"
