@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveRolePathForUser } from "@/lib/role-redirect";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -51,16 +50,18 @@ function ResetPasswordPage() {
               if (password !== confirm) return toast.error("Passwords do not match");
 
               setLoading(true);
-              const { data, error } = await supabase.auth.updateUser({ password });
-              setLoading(false);
+              const { error } = await supabase.auth.updateUser({ password });
               if (error) {
+                setLoading(false);
                 setFailed(true);
                 return toast.error(error.message);
               }
-              toast.success("Password updated");
-              const uid = data.user?.id;
-              const dest = uid ? await resolveRolePathForUser(uid) : "/auth";
-              navigate({ to: dest });
+              // Sign out of the temporary recovery session so the user logs
+              // back in fresh with their new password.
+              await supabase.auth.signOut();
+              setLoading(false);
+              toast.success("Password updated. Please sign in with your new password.");
+              navigate({ to: "/auth" });
             }}
             className="space-y-4"
           >

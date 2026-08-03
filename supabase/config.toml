@@ -5,6 +5,12 @@ project_id = "xxjaxnwfawhfkfjkezgf"
 
 [auth]
 enable_signup = true
+site_url = "https://cricketrecruit.com"
+additional_redirect_urls = [
+  "https://cricketrecruit.com/**",
+  "https://www.cricketrecruit.com/**",
+  "http://localhost:8080/**",
+]
 
 [auth.email]
 # Set to true if you require email confirmation before sign-in.
