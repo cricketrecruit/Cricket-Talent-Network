@@ -100,6 +100,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "/cricket-recruit-logo.png" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/png", href: "/favicon-32x32.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },

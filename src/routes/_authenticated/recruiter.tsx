@@ -217,8 +217,13 @@ export function PlayerDetail({
     enabled: !!p?.profile_photo_path,
     queryFn: async () => (await supabase.storage.from("player-media").createSignedUrl(p!.profile_photo_path!, 3600)).data?.signedUrl,
   });
-  const { data: cvUrl } = useQuery({
-    queryKey: ["signed", p?.cv_storage_path],
+  const { data: cvViewUrl } = useQuery({
+    queryKey: ["signed", "view", p?.cv_storage_path],
+    enabled: !!p?.cv_storage_path,
+    queryFn: async () => (await supabase.storage.from("player-media").createSignedUrl(p!.cv_storage_path!, 3600)).data?.signedUrl,
+  });
+  const { data: cvDownloadUrl } = useQuery({
+    queryKey: ["signed", "download", p?.cv_storage_path],
     enabled: !!p?.cv_storage_path,
     queryFn: async () =>
       (await supabase.storage.from("player-media").createSignedUrl(p!.cv_storage_path!, 3600, { download: p!.cv_storage_path!.split("/").pop() })).data
@@ -260,8 +265,13 @@ export function PlayerDetail({
 
         <div className="mt-8 pt-8 border-t border-ink-black/10">
           <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1.5">{PLAYER_LABELS.cv}</div>
-          {cvUrl ? (
-            <a href={cvUrl} download className="text-sm text-cricket-red hover:underline">↓ Download CV / Resume</a>
+          {cvViewUrl ? (
+            <div className="flex items-center gap-4">
+              <a href={cvViewUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-cricket-red hover:underline">View CV / Resume ↗</a>
+              {cvDownloadUrl && (
+                <a href={cvDownloadUrl} download className="text-sm text-cricket-red hover:underline">↓ Download</a>
+              )}
+            </div>
           ) : (
             <div className="text-sm text-ink-black">—</div>
           )}
