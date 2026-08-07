@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { assignRole } from "@/lib/admin.functions";
+import { assignRole, notifyAdminsOfNewPlayer } from "@/lib/admin.functions";
 import {
   BATTING_STYLE_OPTIONS,
   BOWLING_STYLE_OPTIONS,
@@ -145,6 +145,7 @@ function MediaConsent({
 export function PlayerSignupWizard() {
   const navigate = useNavigate();
   const assign = useServerFn(assignRole);
+  const notifyAdmins = useServerFn(notifyAdminsOfNewPlayer);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [values, setValues] = useState(EMPTY_SIGNUP_VALUES);
@@ -319,6 +320,14 @@ export function PlayerSignupWizard() {
       if (pErr) {
         toast.error(pErr.message);
         return;
+      }
+
+      try {
+        await notifyAdmins({
+          data: { firstName: v.first_name, lastName: v.last_name, email: v.contact_email, country: v.country },
+        });
+      } catch {
+        // Non-critical: never block account creation on a notification failure.
       }
 
       toast.success("Account created");

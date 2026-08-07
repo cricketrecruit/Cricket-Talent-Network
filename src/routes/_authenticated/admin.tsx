@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteUserAccount, reviewRecruiter } from "@/lib/admin.functions";
+import { createAdmin, deleteUserAccount, reviewRecruiter } from "@/lib/admin.functions";
 import { PlayerDetail } from "@/routes/_authenticated/recruiter";
 import { toast } from "sonner";
 
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminDashboard,
 });
 
-type Tab = "pending" | "recruiters" | "players";
+type Tab = "pending" | "recruiters" | "players" | "admins";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -22,6 +22,28 @@ function AdminDashboard() {
   const [viewRecruiterId, setViewRecruiterId] = useState<string | null>(null);
   const review = useServerFn(reviewRecruiter);
   const del = useServerFn(deleteUserAccount);
+  const createAdminFn = useServerFn(createAdmin);
+
+  const { data: me } = useQuery({
+    queryKey: ["me-profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase.from("profiles").select("id, notify_on_new_player").eq("id", user.id).maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: admins } = useQuery({
+    queryKey: ["all-admins"],
+    queryFn: async () => {
+      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
+      const ids = (roles ?? []).map((r: { user_id: string }) => r.user_id);
+      if (ids.length === 0) return [];
+      const { data } = await supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
 
   const { data: recruiters } = useQuery({
     queryKey: ["all-recruiters"],
@@ -52,13 +74,44 @@ function AdminDashboard() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm("Delete this account permanently?")) return;
+    const confirmMsg = userId === me?.id
+      ? "This is YOUR OWN admin account. Deleting it will sign you out permanently. Continue?"
+      : "Delete this account permanently?";
+    if (!confirm(confirmMsg)) return;
     try {
       await del({ data: { userId } });
       toast.success("Account deleted");
       qc.invalidateQueries();
     } catch (e: any) {
       toast.error(e.message);
+    }
+  };
+
+  const handleToggleNotify = async (value: boolean) => {
+    if (!me) return;
+    const { error } = await supabase.from("profiles").update({ notify_on_new_player: value }).eq("id", me.id);
+    if (error) return toast.error(error.message);
+    toast.success(value ? "You'll be emailed when a new player signs up" : "Player signup emails turned off");
+    qc.invalidateQueries({ queryKey: ["me-profile"] });
+  };
+
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({ email: "", fullName: "", password: "" });
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+
+  const handleCreateAdmin = async (e: FormEvent) => {
+    e.preventDefault();
+    setCreatingAdmin(true);
+    try {
+      await createAdminFn({ data: newAdmin });
+      toast.success("Admin created");
+      setNewAdmin({ email: "", fullName: "", password: "" });
+      setShowCreateAdmin(false);
+      qc.invalidateQueries({ queryKey: ["all-admins"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCreatingAdmin(false);
     }
   };
 
@@ -123,6 +176,7 @@ function AdminDashboard() {
             ["pending", `Pending Recruiters (${pending.length})`],
             ["recruiters", "All Recruiters"],
             ["players", "All Players"],
+            ["admins", "Admins"],
           ] as [Tab, string][]).map(([t, l]) => (
             <button
               key={t}
@@ -308,12 +362,125 @@ function AdminDashboard() {
           </div>
         )}
 
+        {/* Admins */}
+        {tab === "admins" && (
+          <div className="space-y-6">
+            <div className="bg-white/[0.02] border border-white/10 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="text-sm text-white">Email me when a new player signs up</div>
+                <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/40 mt-1">Off by default · applies only to your own admin account</div>
+              </div>
+              <button
+                onClick={() => handleToggleNotify(!me?.notify_on_new_player)}
+                className={`cta-press skew-tag px-5 py-2.5 font-display uppercase italic text-sm tracking-widest transition-all ${
+                  me?.notify_on_new_player ? "bg-cricket-red text-white" : "border border-white/20 text-white/60 hover:text-white"
+                }`}
+              >
+                <span>{me?.notify_on_new_player ? "Enabled" : "Disabled"}</span>
+              </button>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowCreateAdmin((v) => !v)}
+                className="cta-press skew-tag bg-cricket-red text-white px-5 py-2.5 font-display uppercase italic text-sm tracking-widest"
+              >
+                <span>{showCreateAdmin ? "Cancel" : "+ Create Admin"}</span>
+              </button>
+            </div>
+
+            {showCreateAdmin && (
+              <form onSubmit={handleCreateAdmin} className="bg-white/[0.02] border border-white/10 p-6 grid sm:grid-cols-3 gap-4 items-end">
+                <label className="text-sm">
+                  <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/50 mb-1.5">Full Name</div>
+                  <input
+                    required
+                    value={newAdmin.fullName}
+                    onChange={(e) => setNewAdmin((v) => ({ ...v, fullName: e.target.value }))}
+                    className="w-full bg-white/[0.05] border border-white/15 px-3 py-2 text-white text-sm outline-none focus:border-cricket-red"
+                  />
+                </label>
+                <label className="text-sm">
+                  <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/50 mb-1.5">Email</div>
+                  <input
+                    required
+                    type="email"
+                    value={newAdmin.email}
+                    onChange={(e) => setNewAdmin((v) => ({ ...v, email: e.target.value }))}
+                    className="w-full bg-white/[0.05] border border-white/15 px-3 py-2 text-white text-sm outline-none focus:border-cricket-red"
+                  />
+                </label>
+                <label className="text-sm">
+                  <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/50 mb-1.5">Password</div>
+                  <input
+                    required
+                    type="password"
+                    minLength={8}
+                    value={newAdmin.password}
+                    onChange={(e) => setNewAdmin((v) => ({ ...v, password: e.target.value }))}
+                    className="w-full bg-white/[0.05] border border-white/15 px-3 py-2 text-white text-sm outline-none focus:border-cricket-red"
+                  />
+                </label>
+                <div className="sm:col-span-3">
+                  <button
+                    type="submit"
+                    disabled={creatingAdmin}
+                    className="cta-press skew-tag border border-cricket-red text-cricket-red px-5 py-2.5 font-display uppercase italic text-sm tracking-widest hover:bg-cricket-red hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    <span>{creatingAdmin ? "Creating…" : "Create Admin"}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="bg-white/[0.02] border border-white/10 overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-white/[0.05] border-b border-white/10">
+                  <tr className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">
+                    <th className="px-6 py-4 font-normal">Name</th>
+                    <th className="px-6 py-4 font-normal">Email</th>
+                    <th className="px-6 py-4 font-normal text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {(admins ?? []).length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center">
+                        <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/40">No admins found</div>
+                      </td>
+                    </tr>
+                  )}
+                  {(admins ?? []).map((a: { id: string; full_name: string | null; email: string | null }) => (
+                    <tr key={a.id} className="group hover:bg-white/[0.03] transition-colors">
+                      <td className="px-6 py-5">
+                        <span className="font-display italic text-lg uppercase text-white">
+                          {a.full_name || "—"}{a.id === me?.id && <span className="text-cricket-red"> (You)</span>}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="text-sm text-white/70">{a.email}</span>
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <button onClick={() => handleDelete(a.id)}
+                          className="text-xs text-cricket-red font-mono uppercase tracking-widest hover:underline transition-all">
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Footer info */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-white/10 pt-8">
           <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/40">
             {tab === "pending" && `Showing ${pending.length} pending request${pending.length === 1 ? "" : "s"}`}
             {tab === "recruiters" && `Showing ${(recruiters ?? []).length} recruiter${(recruiters ?? []).length === 1 ? "" : "s"}`}
             {tab === "players" && `Showing ${(players ?? []).length} player${(players ?? []).length === 1 ? "" : "s"}`}
+            {tab === "admins" && `Showing ${(admins ?? []).length} admin${(admins ?? []).length === 1 ? "" : "s"}`}
           </div>
           <Link to="/" className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/50 hover:text-cricket-red transition-colors">
             ← Back to Home

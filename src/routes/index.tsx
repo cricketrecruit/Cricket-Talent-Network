@@ -52,11 +52,12 @@ export const Route = createFileRoute("/")({
           email: "cricketrecruit@gmail.com",
 
           sameAs: [
-            "https://www.youtube.com/channel/UCaH6i-qe1yOExYsIIwmoppA",
-            "https://www.instagram.com/crickettalentnet",
-            "https://www.linkedin.com/company/cricket-talent-network",
-            "https://www.facebook.com/profile.php?id=61589314779471",
-            "https://x.com/cricketalentnet",
+            "https://www.youtube.com/@CricketRecruit",
+            "https://www.instagram.com/cricketrecruitglobal",
+            "https://www.linkedin.com/company/cricket-recruit",
+            "https://www.facebook.com/profile.php?id=61593084656585",
+            "https://x.com/cricketrecruit",
+            "https://www.tiktok.com/@cricketrecruit",
           ],
         }),
       },

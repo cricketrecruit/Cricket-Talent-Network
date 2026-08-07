@@ -18,11 +18,12 @@ const TIERS = [
 ];
 
 const SOCIALS = [
-  { label: "YouTube", href: "https://www.youtube.com/channel/UCaH6i-qe1yOExYsIIwmoppA" },
-  { label: "Instagram", href: "https://www.instagram.com/crickettalentnet" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/company/cricket-talent-network" },
-  { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61589314779471" },
-  { label: "X (Twitter)", href: "https://x.com/cricketalentnet" },
+  { label: "YouTube", href: "https://www.youtube.com/@CricketRecruit" },
+  { label: "Instagram", href: "https://www.instagram.com/cricketrecruitglobal" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/cricket-recruit" },
+  { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61593084656585" },
+  { label: "X (Twitter)", href: "https://x.com/cricketrecruit" },
+  { label: "TikTok", href: "https://www.tiktok.com/@cricketrecruit" },
 ];
 
 export function Footer() {

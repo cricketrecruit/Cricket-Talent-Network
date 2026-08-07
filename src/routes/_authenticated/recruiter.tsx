@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CvActions } from "@/components/CvActions";
 import {
   getPlayerProfileRows,
   PLAYER_LABELS,
@@ -265,13 +266,8 @@ export function PlayerDetail({
 
         <div className="mt-8 pt-8 border-t border-ink-black/10">
           <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-ink-soft mb-1.5">{PLAYER_LABELS.cv}</div>
-          {cvViewUrl ? (
-            <div className="flex items-center gap-4">
-              <a href={cvViewUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-cricket-red hover:underline">View CV / Resume ↗</a>
-              {cvDownloadUrl && (
-                <a href={cvDownloadUrl} download className="text-sm text-cricket-red hover:underline">↓ Download</a>
-              )}
-            </div>
+          {cvViewUrl && cvDownloadUrl ? (
+            <CvActions path={p.cv_storage_path!} viewUrl={cvViewUrl} downloadUrl={cvDownloadUrl} />
           ) : (
             <div className="text-sm text-ink-black">—</div>
           )}
